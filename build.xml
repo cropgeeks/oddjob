@@ -1,0 +1,40 @@
+<project name="oddjob" default="compile" basedir=".">
+
+	<property file="build.properties"/>
+
+	<property name="src" location="src"/>
+	<property name="lib" location="lib"/>
+	<property name="cls" location="classes"/>
+	<property name="jar" value="${lib}/oddjob.jar"/>
+
+	<!-- Development classpath -->
+	<path id="project.classpath">
+		<pathelement path="${cls}"/>
+		<fileset dir="${lib}"/>
+	</path>
+
+	<target name="init">
+		<mkdir dir="${cls}"/>
+	</target>
+
+	<target name="clean">
+		<delete includeemptydirs="true">
+			<fileset dir="${cls}" includes="**/*"/>
+			<fileset file="${jar}"/>
+		</delete>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac srcdir="${src}" destdir="${cls}" source="11" target="11" debug="true" includeantruntime="false">
+			<classpath refid="project.classpath"/>
+			<!--<compilerarg line="-Xlint:deprecation"/>-->
+		</javac>
+	</target>
+
+	<target name="jar" depends="clean, compile">
+		<jar jarfile="${jar}">
+			<fileset dir="${cls}"/>
+		</jar>
+	</target>
+
+</project>
