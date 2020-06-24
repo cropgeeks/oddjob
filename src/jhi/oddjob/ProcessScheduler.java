@@ -93,6 +93,10 @@ public class ProcessScheduler implements IScheduler
 			throws Exception
 		{
 			out.println(line);
+
+			// If we don't flush on every line, the file can look 'empty' to
+			// anything monitoring it while the job is still running
+			out.flush();
 		}
 
 		void close()
