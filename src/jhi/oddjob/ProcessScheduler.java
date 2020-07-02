@@ -14,7 +14,10 @@ public class ProcessScheduler implements IScheduler
 	private Logger LOG;
 
 	private AtomicInteger jobCount = new AtomicInteger(0);
-	private ConcurrentHashMap<String,Process> jobs = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String,Future<?>> jobs = new ConcurrentHashMap<>();
+
+	private int cores = Runtime.getRuntime().availableProcessors();
+	private ExecutorService executor;
 
 	@Override
 	public void initialize()
@@ -26,6 +29,11 @@ public class ProcessScheduler implements IScheduler
 	public void destroy()
 		throws Exception
 	{
+	}
+
+	public ProcessScheduler()
+	{
+		executor = Executors.newFixedThreadPool(cores);
 	}
 
 	@Override
@@ -48,7 +56,7 @@ public class ProcessScheduler implements IScheduler
 
 					LOG.info("Starting process");
 					Process proc = pb.start();
-					jobs.put(id, proc);
+//					jobs.put(id, proc);
 
 					LOG.info("Waiting for process");
 					File oFile = new File(wrkDir, command + ".o" + id);
@@ -72,7 +80,10 @@ public class ProcessScheduler implements IScheduler
 			}
 		};
 
-		new Thread(r).start();
+		Future<?> future = executor.submit(r);
+		jobs.put(id, future);
+
+//		new Thread(r).start();
 
 		return id;
 	}
@@ -110,11 +121,17 @@ public class ProcessScheduler implements IScheduler
 	public boolean isJobFinished(String id)
 		throws Exception
 	{
-		Process proc = jobs.get(id);
+//		Process proc = jobs.get(id);
 
-		if (proc != null && proc.isAlive())
-			return false;
+//		if (proc != null && proc.isAlive())
+//			return false;
 
+		Future<?> future = jobs.get(id);
+		
+		if (future != null)
+			return future.isDone();
+
+		// TODO: Need a better way to handle unknown job situations
 		return true;
 	}
 
@@ -122,10 +139,15 @@ public class ProcessScheduler implements IScheduler
 	public void cancelJob(String id)
 		throws Exception
 	{
-		Process proc = jobs.get(id);
+//		Process proc = jobs.get(id);
 
-		if (proc != null && proc.isAlive())
-			proc.destroy();
+//		if (proc != null && proc.isAlive())
+//			proc.destroy();
+
+		Future<?> future = jobs.get(id);
+
+		if (future != null)
+			future.cancel(true);
 
 		jobs.remove(id);
 
