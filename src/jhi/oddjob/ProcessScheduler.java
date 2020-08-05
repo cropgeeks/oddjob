@@ -14,7 +14,7 @@ public class ProcessScheduler implements IScheduler
 	private Logger LOG;
 
 	private AtomicInteger jobCount = new AtomicInteger(0);
-	private ConcurrentHashMap<String,Future<?>> jobs = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String,Job> jobs = new ConcurrentHashMap<>();
 
 	private int cores = Runtime.getRuntime().availableProcessors();
 	private ExecutorService executor;
@@ -44,9 +44,15 @@ public class ProcessScheduler implements IScheduler
 
 		final String id = "" + jobCount.addAndGet(1);
 
+		final Job job = new Job();
+		job.info = new JobInfo(id);
+		jobs.put(id, job);
+
 		Runnable r = new Runnable() {
 			public void run()
 			{
+				job.info.setStatus(JobInfo.RUNNING);
+
 				try
 				{
 					args.add(0, command);
@@ -56,6 +62,7 @@ public class ProcessScheduler implements IScheduler
 
 					LOG.info("Starting process");
 					Process proc = pb.start();
+
 //					jobs.put(id, proc);
 
 					LOG.info("Waiting for process");
@@ -70,23 +77,25 @@ public class ProcessScheduler implements IScheduler
 					eStream.close();
 
 					LOG.info("Process finished");
+					job.info.setStatus(JobInfo.ENDED);
 				}
 				catch (Exception e)
 				{
 					LOG.log(Level.SEVERE, e.getMessage(), e);
+					job.info.setStatus(JobInfo.FAILED);
 				}
-
-				jobs.remove(id);
 			}
 		};
 
-		Future<?> future = executor.submit(r);
-		jobs.put(id, future);
+		job.future = executor.submit(r);
+
 
 //		new Thread(r).start();
 
 		return id;
 	}
+
+
 
 	private class SOutputCatcher extends StreamCatcher
 	{
@@ -126,10 +135,12 @@ public class ProcessScheduler implements IScheduler
 //		if (proc != null && proc.isAlive())
 //			return false;
 
-		Future<?> future = jobs.get(id);
-		
-		if (future != null)
+		if (jobs.get(id) != null)
+		{
+			Future<?> future = jobs.get(id).future;
+
 			return future.isDone();
+		}
 
 		// TODO: Need a better way to handle unknown job situations
 		return true;
@@ -144,13 +155,32 @@ public class ProcessScheduler implements IScheduler
 //		if (proc != null && proc.isAlive())
 //			proc.destroy();
 
-		Future<?> future = jobs.get(id);
-
-		if (future != null)
+		if (jobs.get(id) != null)
+		{
+			Future<?> future = jobs.get(id).future;
 			future.cancel(true);
 
-		jobs.remove(id);
+//			jobs.remove(id);
 
-		LOG.info("Cancelled job with ID " + id);
+			LOG.info("Cancelled job with ID " + id);
+		}
+	}
+
+	@Override
+	public JobInfo getJobInfo(String id)
+		throws Exception
+	{
+		Job job = jobs.get(id);
+
+		if (job != null)
+			return job.info;
+		else
+			return null;
+	}
+
+	private static class Job
+	{
+		private JobInfo info;
+		private Future future;
 	}
 }

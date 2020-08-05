@@ -21,4 +21,7 @@ public interface IScheduler
 
 	public void cancelJob(String id)
 		throws Exception;
+
+	public JobInfo getJobInfo(String id)
+		throws Exception;
 }

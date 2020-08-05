@@ -10,6 +10,8 @@ import java.util.logging.*;
 public class SLURMScheduler implements IScheduler
 {
 	private Logger LOG;
+	private File scriptTemplate;
+	private String jobName;
 
 	@Override
 	public void initialize()
@@ -23,6 +25,16 @@ public class SLURMScheduler implements IScheduler
 	{
 	}
 
+	public void setTemplateScript(File scriptTemplate)
+	{
+		this.scriptTemplate = scriptTemplate;
+	}
+
+	public void setJobName(String jobName)
+	{
+		this.jobName = jobName;
+	}
+
 	@Override
 	public String submit(String command, List<String> args, String wrkDir)
 		throws Exception
@@ -34,10 +46,10 @@ public class SLURMScheduler implements IScheduler
 			command += " " + arg;
 
 		// Write out an SBATCH script file to run this command
-		File script = new File(wrkDir, "submit.sh");
+		File script = new File(wrkDir, jobName + ".sh");
 		writeScript(command, script);
 
-		ProcessBuilder pb = new ProcessBuilder("sbatch", "submit.sh");
+		ProcessBuilder pb = new ProcessBuilder("sbatch", jobName + ".sh");
 		pb.directory(new File(wrkDir));
 		pb.redirectErrorStream(true);
 
@@ -65,14 +77,14 @@ public class SLURMScheduler implements IScheduler
 	private void writeScript(String command, File script)
 		throws IOException
 	{
-		BufferedReader in = new BufferedReader(new InputStreamReader(
-			getClass().getResourceAsStream("/src/arrr/Dendrogram.SLURM")));
+		BufferedReader in = new BufferedReader(new FileReader(scriptTemplate));
 		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(script)));
 
 		String str;
 		while ((str = in.readLine()) != null)
 		{
 			str = str.replace("$COMMAND", command);
+			str = str.replace("$JOBNAME", jobName);
 			out.println(str);
 		}
 
@@ -196,5 +208,12 @@ public class SLURMScheduler implements IScheduler
 		{
 			LOG.info(line);
 		}
+	}
+
+	@Override
+	public JobInfo getJobInfo(String id)
+		throws Exception
+	{
+		throw new Exception("Not implemented");
 	}
 }

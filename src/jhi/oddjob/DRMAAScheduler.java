@@ -90,4 +90,11 @@ public class DRMAAScheduler implements IScheduler
 
 		LOG.info("Cancelled job with ID " + id);
 	}
+
+	@Override
+	public JobInfo getJobInfo(String id)
+		throws Exception
+	{
+		throw new Exception("Not implemented");
+	}
 }
