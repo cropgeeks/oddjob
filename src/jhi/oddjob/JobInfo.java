@@ -28,4 +28,17 @@ public class JobInfo
 
 	public void setStatus(int status)
 		{ this.status = status; }
+
+	public String getStatusString()
+	{
+		switch (status)
+		{
+			case WAITING: return "WAITING";
+			case RUNNING: return "RUNNING";
+			case FAILED: return "FAILED";
+			case ENDED: return "ENDED";
+		}
+
+		return "UNKNOWN";
+	}
 }
