@@ -46,12 +46,14 @@ public class ProcessScheduler implements IScheduler
 
 		final Job job = new Job();
 		job.info = new JobInfo(id);
+		job.info.setTimeSubmitted(System.currentTimeMillis());
 		jobs.put(id, job);
 
 		Runnable r = new Runnable() {
 			public void run()
 			{
 				job.info.setStatus(JobInfo.RUNNING);
+				job.info.setTimeStarted(System.currentTimeMillis());
 
 				try
 				{
@@ -84,6 +86,8 @@ public class ProcessScheduler implements IScheduler
 					LOG.log(Level.SEVERE, e.getMessage(), e);
 					job.info.setStatus(JobInfo.FAILED);
 				}
+
+				job.info.setTimeEnded(System.currentTimeMillis());
 			}
 		};
 

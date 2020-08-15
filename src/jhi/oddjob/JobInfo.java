@@ -14,6 +14,7 @@ public class JobInfo
 
 	private String id;
 	private int status = WAITING;
+	private long timeSubmitted, timeStarted, timeEnded, timeTaken;
 
 	public JobInfo(String id)
 	{
@@ -41,4 +42,37 @@ public class JobInfo
 
 		return "UNKNOWN";
 	}
+
+	public long getTimeSubmitted()
+		{ return timeSubmitted; }
+
+	public void setTimeSubmitted(long timeSubmitted)
+		{ this.timeSubmitted = timeSubmitted; }
+
+	public long getTimeStarted()
+		{ return timeStarted; }
+
+	public void setTimeStarted(long timeStarted)
+		{ this.timeStarted = timeStarted; }
+
+	public long getTimeEnded()
+		{ return timeEnded; }
+
+	public void setTimeEnded(long timeEnded)
+		{ this.timeEnded = timeEnded; }
+
+	public void calcTimeTaken()
+	{
+		if (status == WAITING || status == RUNNING)
+			timeTaken = System.currentTimeMillis() - timeSubmitted;
+		else if (status == ENDED)
+			timeTaken = timeEnded - timeSubmitted;
+
+		// Tricky case with failed (when did it fail?)
+		else if (status == FAILED && timeTaken == 0)
+		{
+			timeTaken = System.currentTimeMillis() - timeSubmitted;
+		}
+	}
+
 }
