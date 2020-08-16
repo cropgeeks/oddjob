@@ -61,6 +61,12 @@ public class JobInfo
 	public void setTimeEnded(long timeEnded)
 		{ this.timeEnded = timeEnded; }
 
+	public long getTimeTaken()
+		{ return timeTaken; }
+
+	public void setTimeTaken(long timeTaken)
+		{ this.timeTaken = timeTaken; }
+
 	public void calcTimeTaken()
 	{
 		if (status == WAITING || status == RUNNING)
@@ -74,5 +80,4 @@ public class JobInfo
 			timeTaken = System.currentTimeMillis() - timeSubmitted;
 		}
 	}
-
 }
