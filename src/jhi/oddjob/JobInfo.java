@@ -12,9 +12,13 @@ public class JobInfo
 	// ways so ENDED does not necassarily mean SUCCESSFUL
 	public static final int ENDED = 4;
 
-	private String id;
-	private int status = WAITING;
-	private long timeSubmitted, timeStarted, timeEnded, timeTaken;
+	protected String id;
+	protected int status = WAITING;
+	protected long timeSubmitted, timeStarted, timeEnded, timeTaken;
+
+	public JobInfo()
+	{
+	}
 
 	public JobInfo(String id)
 	{
