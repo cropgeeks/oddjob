@@ -49,7 +49,7 @@ public class DRMAAScheduler implements IScheduler
 			session.exit();
 	}
 
-	public JobInfo submit(String command, List<String> args, String wrkDir)
+	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
 		throws DrmaaException
 	{
 		JobTemplate jt = session.createJobTemplate();
@@ -60,7 +60,7 @@ public class DRMAAScheduler implements IScheduler
 
 		String id = session.runJob(jt);
 
-		JobInfo info = new JobInfo(id);
+		JobInfo info = new JobInfo(id, jobName);
 		info.setTimeSubmitted(System.currentTimeMillis());
 
 		return info;

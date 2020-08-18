@@ -13,6 +13,8 @@ public class JobInfo
 	public static final int ENDED = 4;
 
 	protected String id;
+	protected String name;
+
 	protected int status = WAITING;
 	protected long timeSubmitted, timeStarted, timeEnded, timeTaken;
 
@@ -20,13 +22,17 @@ public class JobInfo
 	{
 	}
 
-	public JobInfo(String id)
+	public JobInfo(String id, String name)
 	{
 		this.id = id;
+		this.name = name;
 	}
 
 	public String getId()
 		{ return id; }
+
+	public String getName()
+		{ return name; }
 
 	public int getStatus()
 		{ return status; }
