@@ -36,7 +36,7 @@ public class SLURMScheduler implements IScheduler
 	}
 
 	@Override
-	public String submit(String command, List<String> args, String wrkDir)
+	public JobInfo submit(String command, List<String> args, String wrkDir)
 		throws Exception
 	{
 		LOG.info("Submitting a SLURM job...");
@@ -69,7 +69,7 @@ public class SLURMScheduler implements IScheduler
 		LOG.info("JOB ID IS: " + oStream.jobId);
 
 		if (oStream.jobId != null)
-			return "" + oStream.jobId;
+			return new JobInfo("" + oStream.jobId);
 		else
 			throw new Exception("Unable to submit job");
 	}

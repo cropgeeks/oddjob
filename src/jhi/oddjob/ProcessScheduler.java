@@ -37,7 +37,7 @@ public class ProcessScheduler implements IScheduler
 	}
 
 	@Override
-	public String submit(String command, List<String> args, String wrkDir)
+	public JobInfo submit(String command, List<String> args, String wrkDir)
 		throws Exception
 	{
 		LOG.info("Submitting a ProcessBuilder job...");
@@ -96,7 +96,7 @@ public class ProcessScheduler implements IScheduler
 
 //		new Thread(r).start();
 
-		return id;
+		return job.info;
 	}
 
 

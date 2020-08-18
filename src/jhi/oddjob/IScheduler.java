@@ -13,7 +13,7 @@ public interface IScheduler
 	public void destroy()
 		throws Exception;
 
-	public String submit(String command, List<String> args, String wrkDir)
+	public JobInfo submit(String command, List<String> args, String wrkDir)
 		throws Exception;
 
 	public boolean isJobFinished(String id)
