@@ -88,6 +88,7 @@ public class ProcessScheduler implements IScheduler
 				}
 
 				job.info.setTimeEnded(System.currentTimeMillis());
+				job.info.calcTimeTaken();
 			}
 		};
 
@@ -177,7 +178,10 @@ public class ProcessScheduler implements IScheduler
 		Job job = jobs.get(id);
 
 		if (job != null)
+		{
+			job.info.calcTimeTaken();
 			return job.info;
+		}
 		else
 			return null;
 	}
