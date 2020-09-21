@@ -216,4 +216,11 @@ public class SLURMScheduler implements IScheduler
 	{
 		throw new Exception("Not implemented");
 	}
+
+	@Override
+	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir, List<String> depIDs)
+		throws Exception
+	{
+		throw new RuntimeException("Not implemented");
+	}
 }

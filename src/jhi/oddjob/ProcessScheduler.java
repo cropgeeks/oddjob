@@ -15,6 +15,7 @@ public class ProcessScheduler implements IScheduler
 
 	private AtomicInteger jobCount = new AtomicInteger(0);
 	private ConcurrentHashMap<String,Job> jobs = new ConcurrentHashMap<>();
+	private ArrayList<Job> waitingJobs = new ArrayList<>();
 
 	private int cores = Runtime.getRuntime().availableProcessors();
 	private ExecutorService executor;
@@ -40,6 +41,13 @@ public class ProcessScheduler implements IScheduler
 	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
 		throws Exception
 	{
+		return submit(jobName, command, args, wrkDir, null);
+	}
+
+	@Override
+	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir, List<String> dependencies)
+		throws Exception
+	{
 		LOG.info("Submitting a ProcessBuilder job...");
 
 		final String id = "" + jobCount.addAndGet(1);
@@ -47,9 +55,10 @@ public class ProcessScheduler implements IScheduler
 		final Job job = new Job();
 		job.info = new JobInfo(id, jobName);
 		job.info.setTimeSubmitted(System.currentTimeMillis());
+		job.dependencies = dependencies;
 		jobs.put(id, job);
 
-		Runnable r = new Runnable() {
+		job.r = new Runnable() {
 			public void run()
 			{
 				job.info.setStatus(JobInfo.RUNNING);
@@ -89,18 +98,58 @@ public class ProcessScheduler implements IScheduler
 
 				job.info.setTimeEnded(System.currentTimeMillis());
 				job.info.calcTimeTaken();
+
+				processWaitingJobs();
 			}
 		};
 
-		job.future = executor.submit(r);
-
-
-//		new Thread(r).start();
+		waitingJobs.add(job);
+		processWaitingJobs();
 
 		return job.info;
 	}
 
+	// Run whenever a job finishes (or is cancelled); processes the list of
+	// waiting jobs (that have dependencies on other jobs) to see if any of them
+	// can now start
+	private synchronized void processWaitingJobs()
+	{
+		// For all waiting jobs...
+//		for (Job job: waitingJobs)
+		for (int j = 0; j < waitingJobs.size(); j++)
+		{
+			Job job = waitingJobs.get(j);
 
+			boolean okToStart = true;
+
+			// Check to see if its dependencies are still running
+			if (job.dependencies != null)
+			{
+				for (String id: job.dependencies)
+				{
+					Job depJob = jobs.get(id);
+					// TODO: What happens if we can't find the dependent job?
+					if (depJob == null)
+						continue;
+
+					int depStatus = depJob.info.status;
+					if (depStatus == JobInfo.WAITING || depStatus == JobInfo.RUNNING)
+					{
+						okToStart = false;
+						break;
+					}
+				}
+			}
+
+			if (okToStart)
+			{
+				// Remove the job from the waiting list
+				waitingJobs.remove(job);
+
+				job.future = executor.submit(job.r);
+			}
+		}
+	}
 
 	private class SOutputCatcher extends StreamCatcher
 	{
@@ -189,6 +238,12 @@ public class ProcessScheduler implements IScheduler
 	private static class Job
 	{
 		private JobInfo info;
+
 		private Future future;
+		private Runnable r;
+
+		// An optional list of other job IDs that must be finished before this
+		// job will start execution
+		private List<String> dependencies;
 	}
 }

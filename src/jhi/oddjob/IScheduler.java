@@ -16,6 +16,9 @@ public interface IScheduler
 	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
 		throws Exception;
 
+	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir, List<String> depIDs)
+		throws Exception;
+
 	public boolean isJobFinished(String id)
 		throws Exception;
 
