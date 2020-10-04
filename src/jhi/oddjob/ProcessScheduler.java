@@ -145,6 +145,7 @@ public class ProcessScheduler implements IScheduler
 			{
 				// Remove the job from the waiting list
 				waitingJobs.remove(job);
+				j--;
 
 				job.future = executor.submit(job.r);
 			}
