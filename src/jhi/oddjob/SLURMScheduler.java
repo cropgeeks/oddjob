@@ -94,7 +94,7 @@ public class SLURMScheduler implements IScheduler
 
 	private class SBatchCatcher extends StreamCatcher
 	{
-		SBatchCatcher(InputStream in) { super(in); }
+		SBatchCatcher(InputStream in) { super(in); start(); }
 		Integer jobId;
 
 		@Override
@@ -164,6 +164,8 @@ public class SLURMScheduler implements IScheduler
 		{
 			super(in);
 			this.id = id;
+
+			start();
 		}
 
 		@Override
@@ -200,7 +202,7 @@ public class SLURMScheduler implements IScheduler
 
 	private class SCancelCatcher extends StreamCatcher
 	{
-		SCancelCatcher(InputStream in) { super(in); }
+		SCancelCatcher(InputStream in) { super(in); start(); }
 
 		@Override
 		protected void processLine(String line)

@@ -49,6 +49,7 @@ public class ProcessScheduler implements IScheduler
 		throws Exception
 	{
 		LOG.info("Submitting a ProcessBuilder job...");
+		LOG.info("Working directory: " + wrkDir);
 
 		final String id = "" + jobCount.addAndGet(1);
 
@@ -78,8 +79,10 @@ public class ProcessScheduler implements IScheduler
 
 					LOG.info("Waiting for process");
 					File oFile = new File(wrkDir, command + ".o" + id);
+					LOG.info("oStream: " + oFile);
 					SOutputCatcher oStream = new SOutputCatcher(proc.getInputStream(), oFile);
 					File eFile = new File(wrkDir, command + ".e" + id);
+					LOG.info("eStream: " + eFile);
 					SOutputCatcher eStream = new SOutputCatcher(proc.getErrorStream(), eFile);
 
 					proc.waitFor();
@@ -161,6 +164,8 @@ public class ProcessScheduler implements IScheduler
 		{
 			super(in);
 			out = new PrintWriter(new BufferedWriter(new FileWriter(oFile)));
+
+			start();
 		}
 
 		@Override

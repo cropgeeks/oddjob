@@ -14,7 +14,6 @@ public abstract class StreamCatcher extends Thread
 	public StreamCatcher(InputStream in)
 	{
 		reader = new BufferedReader(new InputStreamReader(in));
-		start();
 	}
 
 	public void run()
