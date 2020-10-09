@@ -1,4 +1,4 @@
-// Copyright 2018 Information & Computational Sciences, JHI. All rights
+// Copyright 2020 Information & Computational Sciences, JHI. All rights
 // reserved. Use is subject to the accompanying licence terms.
 
 package jhi.oddjob;
@@ -72,23 +72,15 @@ public class ProcessScheduler implements IScheduler
 					ProcessBuilder pb = new ProcessBuilder(args);
 					pb.directory(new File(wrkDir));
 
+					// Redirect the output/error streams
+					pb.redirectOutput(new File(wrkDir, command + ".o" + id));
+					pb.redirectError(new File(wrkDir, command + ".e" + id));
+
 					LOG.info("Starting process");
 					Process proc = pb.start();
 
-//					jobs.put(id, proc);
-
 					LOG.info("Waiting for process");
-					File oFile = new File(wrkDir, command + ".o" + id);
-					LOG.info("oStream: " + oFile);
-					SOutputCatcher oStream = new SOutputCatcher(proc.getInputStream(), oFile);
-					File eFile = new File(wrkDir, command + ".e" + id);
-					LOG.info("eStream: " + eFile);
-					SOutputCatcher eStream = new SOutputCatcher(proc.getErrorStream(), eFile);
-
 					proc.waitFor();
-
-					oStream.close();
-					eStream.close();
 
 					LOG.info("Process finished");
 					job.info.setStatus(JobInfo.ENDED);
@@ -152,37 +144,6 @@ public class ProcessScheduler implements IScheduler
 
 				job.future = executor.submit(job.r);
 			}
-		}
-	}
-
-	private class SOutputCatcher extends StreamCatcher
-	{
-		PrintWriter out;
-
-		SOutputCatcher(InputStream in, File oFile)
-			throws IOException
-		{
-			super(in);
-			out = new PrintWriter(new BufferedWriter(new FileWriter(oFile)));
-
-			start();
-		}
-
-		@Override
-		protected void processLine(String line)
-			throws Exception
-		{
-			out.println(line);
-
-			// If we don't flush on every line, the file can look 'empty' to
-			// anything monitoring it while the job is still running
-			out.flush();
-		}
-
-		void close()
-			throws Exception
-		{
-			out.close();
 		}
 	}
 
