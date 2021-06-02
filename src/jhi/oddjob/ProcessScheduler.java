@@ -13,7 +13,11 @@ public class ProcessScheduler implements IScheduler
 {
 	private Logger LOG;
 
-	private AtomicInteger jobCount = new AtomicInteger(0);
+	// Tracks the index of the last job that was run
+	private File jobIdFile;
+	private AtomicInteger jobCount;
+
+
 	private ConcurrentHashMap<String,Job> jobs = new ConcurrentHashMap<>();
 	private ArrayList<Job> waitingJobs = new ArrayList<>();
 
@@ -24,6 +28,23 @@ public class ProcessScheduler implements IScheduler
 	public void initialize()
 	{
 		LOG = Logger.getLogger(ProcessScheduler.class.getName());
+
+		if (jobCount == null)
+		{
+			try
+			{
+				BufferedReader in = new BufferedReader(new FileReader(jobIdFile));
+				int index = Integer.parseInt(in.readLine());
+				in.close();
+
+				jobCount = new AtomicInteger(index);
+			}
+			catch (Exception e)	{
+				e.printStackTrace();
+
+				jobCount = new AtomicInteger(0);
+			}
+		}
 	}
 
 	@Override
@@ -36,6 +57,14 @@ public class ProcessScheduler implements IScheduler
 	{
 		executor = Executors.newFixedThreadPool(cores);
 	}
+
+	public ProcessScheduler(File jobIdFile)
+	{
+		this();
+
+		this.jobIdFile = jobIdFile;
+	}
+
 
 	@Override
 	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
@@ -51,7 +80,7 @@ public class ProcessScheduler implements IScheduler
 		LOG.info("Submitting a ProcessBuilder job...");
 		LOG.info("Working directory: " + wrkDir);
 
-		final String id = "" + jobCount.addAndGet(1);
+		final String id = getNextJobId();
 
 		final Job job = new Job();
 		job.info = new JobInfo(id, jobName);
@@ -102,6 +131,26 @@ public class ProcessScheduler implements IScheduler
 		processWaitingJobs();
 
 		return job.info;
+	}
+
+	private synchronized String getNextJobId()
+	{
+		int jobId = jobCount.addAndGet(1);
+
+		if (jobIdFile != null)
+		{
+			try
+			{
+				BufferedWriter out = new BufferedWriter(new FileWriter(jobIdFile));
+				out.write("" + jobId);
+				out.close();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		return "" + jobId;
 	}
 
 	// Run whenever a job finishes (or is cancelled); processes the list of
