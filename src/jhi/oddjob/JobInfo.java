@@ -79,15 +79,15 @@ public class JobInfo
 
 	public void calcTimeTaken()
 	{
-		if (status == WAITING || status == RUNNING)
-			timeTaken = System.currentTimeMillis() - timeSubmitted;
+		if (status == RUNNING)
+			timeTaken = System.currentTimeMillis() - timeStarted;
 		else if (status == ENDED)
-			timeTaken = timeEnded - timeSubmitted;
+			timeTaken = timeEnded - timeStarted;
 
 		// Tricky case with failed (when did it fail?)
 		else if (status == FAILED && timeTaken == 0)
 		{
-			timeTaken = System.currentTimeMillis() - timeSubmitted;
+			timeTaken = System.currentTimeMillis() - timeStarted;
 		}
 	}
 }

@@ -133,6 +133,8 @@ public class ProcessScheduler implements IScheduler
 				{
 					LOG.log(Level.SEVERE, e.getMessage(), e);
 					job.info.setStatus(JobInfo.FAILED);
+					job.info.setTimeEnded(System.currentTimeMillis());
+					job.info.calcTimeTaken();
 				}
 
 				job.info.setTimeEnded(System.currentTimeMillis());
