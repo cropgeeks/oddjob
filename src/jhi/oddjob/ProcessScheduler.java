@@ -22,7 +22,7 @@ public class ProcessScheduler implements IScheduler
 	private ArrayList<Job> waitingJobs = new ArrayList<>();
 
 	private int cores = Runtime.getRuntime().availableProcessors();
-	private ExecutorService executor;
+	private ThreadPoolExecutor executor;
 
 	@Override
 	public void initialize()
@@ -45,6 +45,20 @@ public class ProcessScheduler implements IScheduler
 				jobCount = new AtomicInteger(0);
 			}
 		}
+
+		new Thread(new Runnable() {
+			public void run() {
+				while (true)
+				{
+					processWaitingJobs();
+
+					LOG.info("used threads: " + executor.getActiveCount());
+
+					try { Thread.sleep(5000); }
+					catch (Exception e) {}
+				}
+			}
+		}).start();
 	}
 
 	@Override
@@ -55,7 +69,7 @@ public class ProcessScheduler implements IScheduler
 
 	public ProcessScheduler()
 	{
-		executor = Executors.newFixedThreadPool(cores);
+		executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(cores);
 	}
 
 	public ProcessScheduler(File jobIdFile)
@@ -67,14 +81,14 @@ public class ProcessScheduler implements IScheduler
 
 
 	@Override
-	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
+	public JobInfo submit(String jobName, String command, int requestedCores, List<String> args, String wrkDir)
 		throws Exception
 	{
-		return submit(jobName, command, args, wrkDir, null);
+		return submit(jobName, command, requestedCores, args, wrkDir, null);
 	}
 
 	@Override
-	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir, List<String> dependencies)
+	public JobInfo submit(String jobName, String command, int requestedCores, List<String> args, String wrkDir, List<String> dependencies)
 		throws Exception
 	{
 		LOG.info("Submitting a ProcessBuilder job...");
@@ -84,6 +98,7 @@ public class ProcessScheduler implements IScheduler
 
 		final Job job = new Job();
 		job.info = new JobInfo(id, jobName);
+		job.requestedCores = requestedCores;
 		job.info.setTimeSubmitted(System.currentTimeMillis());
 		job.dependencies = dependencies;
 		jobs.put(id, job);
@@ -123,12 +138,33 @@ public class ProcessScheduler implements IScheduler
 				job.info.setTimeEnded(System.currentTimeMillis());
 				job.info.calcTimeTaken();
 
-				processWaitingJobs();
+//				processWaitingJobs();
 			}
 		};
 
 		waitingJobs.add(job);
-		processWaitingJobs();
+
+		for (int i = 0; i < job.requestedCores-1; i++)
+		{
+			final int dummyID = i;
+
+			Runnable dummyThread = new Runnable() {
+				public void run()
+				{
+					while (job.future.isDone() == false)
+					{
+						LOG.info(job.info.getId() + " is still running; checked by dummy " + dummyID);
+
+						try { Thread.sleep(5000); }
+						catch (Exception e) {}
+					}
+				}
+			};
+
+			job.dummyThreads.add(dummyThread);
+		}
+
+//		processWaitingJobs();
 
 		return job.info;
 	}
@@ -185,13 +221,16 @@ public class ProcessScheduler implements IScheduler
 				}
 			}
 
-			if (okToStart)
+			if (okToStart && executor.getCorePoolSize() - executor.getActiveCount() >= job.requestedCores)
 			{
 				// Remove the job from the waiting list
 				waitingJobs.remove(job);
 				j--;
 
 				job.future = executor.submit(job.r);
+
+				for (Runnable r: job.dummyThreads)
+					executor.submit(r);
 			}
 		}
 	}
@@ -257,9 +296,12 @@ public class ProcessScheduler implements IScheduler
 
 		private Future future;
 		private Runnable r;
+		private int requestedCores = 1;
 
 		// An optional list of other job IDs that must be finished before this
 		// job will start execution
 		private List<String> dependencies;
+
+		private List<Runnable> dummyThreads = new ArrayList<Runnable>();
 	}
 }

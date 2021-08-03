@@ -49,7 +49,7 @@ public class DRMAAScheduler implements IScheduler
 			session.exit();
 	}
 
-	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir)
+	public JobInfo submit(String jobName, String command, int requestedCores, List<String> args, String wrkDir)
 		throws DrmaaException
 	{
 		JobTemplate jt = session.createJobTemplate();
@@ -104,7 +104,7 @@ public class DRMAAScheduler implements IScheduler
 	}
 
 	@Override
-	public JobInfo submit(String jobName, String command, List<String> args, String wrkDir, List<String> depIDs)
+	public JobInfo submit(String jobName, String command, int requestedCores, List<String> args, String wrkDir, List<String> depIDs)
 		throws Exception
 	{
 		throw new RuntimeException("Not implemented");
