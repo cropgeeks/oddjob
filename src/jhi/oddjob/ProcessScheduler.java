@@ -117,8 +117,8 @@ public class ProcessScheduler implements IScheduler
 					pb.directory(new File(wrkDir));
 
 					// Redirect the output/error streams
+					pb.redirectErrorStream(true);
 					pb.redirectOutput(new File(wrkDir, command + ".o" + id));
-					pb.redirectError(new File(wrkDir, command + ".e" + id));
 
 					LOG.info("Starting process");
 					Process proc = pb.start();
